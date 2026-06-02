@@ -1,0 +1,119 @@
+# Makefile.hpc — Build system for acotsp HPC (CUDA + MPI + NCCL)
+#
+# Targets:
+#   make serial        — original serial baseline (no CUDA/MPI)
+#   make gpu           — Stage 1+2: single-GPU construction + 2-opt
+#   make multi-gpu     — Stage 1+2+3: multi-GPU single node
+#   make mpi           — Stage 1+2+3+5: full multi-node MPI
+#   make all           — same as mpi (most complete build)
+#   make clean
+#
+# Taiwan-Supericomputer (Taiwania-2/3) module assumptions:
+#   module load cuda/11.8  (or 12.x)
+#   module load openmpi/4.1 (or similar)
+#   module load nccl/2.x
+#   NVCC, MPICC found via module PATH
+
+# ---- Compiler selection ----
+CC      = gcc
+MPICC   = mpicc
+NVCC    = nvcc
+
+# ---- GPU architecture (V100 = sm_70) ----
+GPU_ARCH = sm_70
+
+# ---- Optimization flags ----
+OPT      = -O3 -march=native
+CFLAGS   = $(OPT) -Wall -std=c99
+NVFLAGS  = -O3 -arch=$(GPU_ARCH) --compiler-options "-O3 -Wall"
+
+# ---- Paths (override from environment if modules set them) ----
+CUDA_HOME ?= /usr/local/cuda
+NCCL_HOME ?= /usr/local/nccl
+MPI_HOME  ?= $(shell mpicc --showme:prefix 2>/dev/null || echo /usr/lib/openmpi)
+
+# ---- Include / library flags ----
+CUDA_INC  = -I$(CUDA_HOME)/include
+CUDA_LIB  = -L$(CUDA_HOME)/lib64 -lcudart -lcuda
+NCCL_INC  = -I$(NCCL_HOME)/include
+NCCL_LIB  = -L$(NCCL_HOME)/lib -lnccl
+MATH_LIB  = -lm
+
+# ---- Source files shared by all targets ----
+C_SRCS = ants.c InOut.c TSP.c ls.c parse.c unix_timer.c utilities.c topk.c
+C_OBJS = $(C_SRCS:.c=.o)
+
+# ---- Default: build all ----
+all: mpi
+
+# ================================================================
+# Target: serial — pure CPU baseline (no CUDA, no MPI)
+# ================================================================
+serial: acotsp_serial
+
+SERIAL_SRCS = acotsp_hpc.c $(C_SRCS)
+SERIAL_OBJS = $(SERIAL_SRCS:.c=.serial.o)
+
+%.serial.o: %.c
+	$(CC) $(CFLAGS) -c $< -o $@
+
+acotsp_serial: $(SERIAL_OBJS)
+	$(CC) $(OPT) -o $@ $^ $(MATH_LIB)
+	@echo "Built: $@ (serial CPU baseline)"
+
+# ================================================================
+# Target: gpu — Stage 1+2, single GPU
+# ================================================================
+gpu: acotsp_gpu
+
+GPU_C_SRCS = acotsp_hpc.c $(C_SRCS)
+GPU_C_OBJS = $(GPU_C_SRCS:.c=.gpu.o)
+
+%.gpu.o: %.c
+	$(CC) $(CFLAGS) -DUSE_CUDA $(CUDA_INC) -c $< -o $@
+
+gpu_aco.o: gpu_aco.cu gpu_aco.h
+	$(NVCC) $(NVFLAGS) -c gpu_aco.cu -o gpu_aco.o
+
+acotsp_gpu: $(GPU_C_OBJS) gpu_aco.o
+	$(CC) $(OPT) -o $@ $^ $(CUDA_LIB) $(MATH_LIB)
+	@echo "Built: $@ (Stage 1+2: GPU construction + 2-opt)"
+
+# ================================================================
+# Target: multi-gpu — Stage 1+2+3, multi-GPU single node
+# ================================================================
+multi-gpu: acotsp_multigpu
+
+MG_C_SRCS = acotsp_hpc.c $(C_SRCS)
+MG_C_OBJS = $(MG_C_SRCS:.c=.mg.o)
+
+%.mg.o: %.c
+	$(CC) $(CFLAGS) -DUSE_CUDA $(CUDA_INC) -c $< -o $@
+
+acotsp_multigpu: $(MG_C_OBJS) gpu_aco.o
+	$(CC) $(OPT) -o $@ $^ $(CUDA_LIB) $(MATH_LIB)
+	@echo "Built: $@ (Stage 1+2+3: multi-GPU)"
+
+# ================================================================
+# Target: mpi — Stage 1+2+3+5, multi-node MPI
+# ================================================================
+mpi: acotsp_hpc
+
+MPI_C_SRCS = acotsp_hpc.c $(C_SRCS)
+MPI_C_OBJS = $(MPI_C_SRCS:.c=.mpi.o)
+
+%.mpi.o: %.c
+	$(MPICC) $(CFLAGS) -DUSE_CUDA -DUSE_MPI -DUSE_NCCL \
+	         $(CUDA_INC) $(NCCL_INC) -c $< -o $@
+
+acotsp_hpc: $(MPI_C_OBJS) gpu_aco.o
+	$(MPICC) $(OPT) -o $@ $^ $(CUDA_LIB) $(NCCL_LIB) $(MATH_LIB)
+	@echo "Built: $@ (Stage 1+2+3+5: full MPI+GPU)"
+
+# ================================================================
+# Clean
+# ================================================================
+clean:
+	rm -f *.o acotsp_serial acotsp_gpu acotsp_multigpu acotsp_hpc
+
+.PHONY: all serial gpu multi-gpu mpi clean
