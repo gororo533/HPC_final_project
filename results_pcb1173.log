@@ -1,0 +1,36 @@
+========================================================================
+  ACO/TSP EXPERIMENT RESULTS
+  Instance : pcb1173
+  Optimal  : 56892
+  Generated: 2026-05-31 21:03:28
+========================================================================
+
+Algorithm    Mode           Best        Gap    AvgIter AvgTime(s) WallTime(s)
+------------------------------------------------------------------------
+mmas         original      56975    +0.146%        758      18.62      30.22
+    try 0: best=56998  gap=+0.186%  found_iter=1229  found_time=29.301s
+    try 1: best=57048  gap=+0.274%  found_iter=481  found_time=12.119s
+    try 2: best=56975  gap=+0.146%  found_iter=564  found_time=14.438s
+mmas         top-k(k=5)      57824    +1.638%        500      16.09      30.05
+    try 0: best=58009  gap=+1.963%  found_iter=833  found_time=27.196s
+    try 1: best=57977  gap=+1.907%  found_iter=343  found_time=10.827s
+    try 2: best=57824  gap=+1.638%  found_iter=323  found_time=10.240s
+acs          original      56892    +0.000%       2535      19.92      30.21
+    try 0: best=57090  gap=+0.348%  found_iter=3067  found_time=23.127s
+    try 1: best=56892  gap=+0.000%  found_iter=2875  found_time=23.386s
+    try 2: best=57042  gap=+0.264%  found_iter=1663  found_time=13.257s
+acs          top-k(k=5)      56941    +0.086%       2154      16.76      30.20
+    try 0: best=56971  gap=+0.139%  found_iter=2537  found_time=19.742s
+    try 1: best=57254  gap=+0.636%  found_iter=2440  found_time=18.671s
+    try 2: best=56941  gap=+0.086%  found_iter=1486  found_time=11.865s
+
+========================================================================
+
+  ORIGINAL vs TOP-K COMPARISON
+------------------------------------------------------------------------
+Algorithm     Orig.Best  TopK.Best   Orig.Gap   TopK.Gap  SpeedupIter
+------------------------------------------------------------------------
+mmas              56975      57824    +0.146%    +1.638%        0.75x
+acs               56892      56941    +0.000%    +0.086%        1.01x
+
+========================================================================

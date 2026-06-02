@@ -1,0 +1,36 @@
+========================================================================
+  ACO/TSP EXPERIMENT RESULTS
+  Instance : pcb442
+  Optimal  : 50778
+  Generated: 2026-05-31 20:39:23
+========================================================================
+
+Algorithm    Mode           Best        Gap    AvgIter AvgTime(s) WallTime(s)
+------------------------------------------------------------------------
+mmas         original      50778    +0.000%       2773      16.87      30.06
+    try 0: best=50778  gap=+0.000%  found_iter=1207  found_time=7.571s
+    try 1: best=50778  gap=+0.000%  found_iter=4324  found_time=25.910s
+    try 2: best=50778  gap=+0.000%  found_iter=2788  found_time=17.142s
+mmas         top-k(k=5)      51018    +0.473%       2140      17.03      29.80
+    try 0: best=51018  gap=+0.473%  found_iter=2848  found_time=22.828s
+    try 1: best=51144  gap=+0.721%  found_iter=1554  found_time=12.232s
+    try 2: best=51022  gap=+0.481%  found_iter=2019  found_time=16.044s
+acs          original      50778    +0.000%        447       0.87      30.09
+    try 0: best=50778  gap=+0.000%  found_iter=413  found_time=0.751s
+    try 1: best=50912  gap=+0.264%  found_iter=416  found_time=0.845s
+    try 2: best=50912  gap=+0.264%  found_iter=511  found_time=1.001s
+acs          top-k(k=5)      50778    +0.000%      11031      22.13      30.28
+    try 0: best=50778  gap=+0.000%  found_iter=6762  found_time=12.679s
+    try 1: best=50778  gap=+0.000%  found_iter=12329  found_time=25.398s
+    try 2: best=50785  gap=+0.014%  found_iter=14002  found_time=28.322s
+
+========================================================================
+
+  ORIGINAL vs TOP-K COMPARISON
+------------------------------------------------------------------------
+Algorithm     Orig.Best  TopK.Best   Orig.Gap   TopK.Gap  SpeedupIter
+------------------------------------------------------------------------
+mmas              50778      51018    +0.000%    +0.473%        0.76x
+acs               50778      50778    +0.000%    +0.000%        0.95x
+
+========================================================================
